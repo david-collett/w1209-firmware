@@ -31,6 +31,8 @@
 static unsigned int timer;
 static bool state;
 
+static unsigned char force ;
+
 /**
  * @brief Configure appropriate bits for GPIO port A, reset local timer
  *  and reset state.
@@ -41,6 +43,16 @@ void initRelay()
     PA_CR1 |= RELAY_BIT;
     timer = 0;
     state = false;
+    force = RELAY_FORCE_NA;
+}
+
+/**
+ * @brief Sets state of the relay to force on, off or n/a.
+ * @param rf - RELAY_FORCE_ON:ON, RELAY_FORCE_OFF:OFF, RELAY_FORCE_NA:N/A
+ */
+void setRelayForce (unsigned char rf)
+{
+  force = rf;
 }
 
 /**
@@ -65,35 +77,48 @@ void refreshRelay()
 {
     bool mode = getParamById (PARAM_RELAY_MODE);
 
-    if (state) { // Relay state is enabled
-        if (getTemperature() < (getParamById (PARAM_THRESHOLD)
-                                - (getParamById (PARAM_RELAY_HYSTERESIS) >> 3) ) ) {
-            timer++;
+    int temp = getTemperature() ;
+    int hold = getParamById (PARAM_THRESHOLD) ;
+    int hyst = getParamById (PARAM_RELAY_HYSTERESIS) ;
 
-            if ( (getParamById (PARAM_RELAY_DELAY) << RELAY_TIMER_MULTIPLIER) < timer) {
-                state = false;
-                setRelay (mode);
-            } else {
-                setRelay (!mode);
-            }
-        } else {
-            timer = 0;
-            setRelay (!mode);
-        }
-    } else { // Relay state is disabled
-        if (getTemperature() > (getParamById (PARAM_THRESHOLD)
-                                + (getParamById (PARAM_RELAY_HYSTERESIS) >> 3) ) ) {
-            timer++;
-
-            if ( (getParamById (PARAM_RELAY_DELAY) << RELAY_TIMER_MULTIPLIER) < timer) {
-                state = true;
-                setRelay (!mode);
-            } else {
-                setRelay (mode);
-            }
-        } else {
-            timer = 0;
-            setRelay (mode);
+    // overheat protection
+    if (getParamById (PARAM_OVERHEAT_INDICATION) ) {
+        if ( temp < getParamById (PARAM_MIN_TEMPERATURE) *10 /*LLL*/ ||
+             temp > getParamById (PARAM_MAX_TEMPERATURE) *10 /*HHH*/ ) {
+            setRelay (false);
+            timer = 0 ;
+            return; // overheat or too cold
         }
     }
+
+    if(mode) { // Hot
+      // inverse
+      temp = - temp ;
+      hold = - hold ;
+    }
+    if(state) { // Relay state is enabled
+      if(temp <= hold) {
+          if ( (getParamById (PARAM_RELAY_DELAY) << RELAY_TIMER_MULTIPLIER) < timer) {
+              state = false; timer = 0 ;
+          }
+      }
+    }else { // Relay state is disabled
+      if(temp >= hold+hyst) {
+          if ( (getParamById (PARAM_RELAY_DELAY) << RELAY_TIMER_MULTIPLIER) < timer) {
+              state = true; timer = 0 ;
+          }
+      }
+    }
+    switch(force) {
+    case RELAY_FORCE_ON:
+        setRelay(true);
+        break;
+    case RELAY_FORCE_OFF:
+        setRelay(false);
+        break;
+    case RELAY_FORCE_NA:
+    default:
+        setRelay(state);
+    }
+    timer++;
 }

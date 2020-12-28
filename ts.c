@@ -57,12 +57,16 @@ int main()
             setDisplayStr ( (char*) stringBuffer);
 
             if (getParamById (PARAM_OVERHEAT_INDICATION) ) {
-                if (temp < getParamById (PARAM_MIN_TEMPERATURE) ) {
+                if (temp < getParamById (PARAM_MIN_TEMPERATURE)*10 ) {
                     setDisplayStr ("LLL");
-                } else if (temp > getParamById (PARAM_MAX_TEMPERATURE) ) {
+                } else if (temp > getParamById (PARAM_MAX_TEMPERATURE)*10 ) {
                     setDisplayStr ("HHH");
                 }
             }
+        } else if (getMenuDisplay() == MENU_RELAY_FORCE_ON) {
+            setDisplayStr ( " ON" );
+        } else if (getMenuDisplay() == MENU_RELAY_FORCE_OFF) {
+            setDisplayStr ( "OFF" );
         } else if (getMenuDisplay() == MENU_SET_THRESHOLD) {
             paramToString (PARAM_THRESHOLD, (char*) stringBuffer);
             setDisplayStr ( (char*) stringBuffer);

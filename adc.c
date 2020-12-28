@@ -32,6 +32,8 @@
 #define ADC_RAW_TABLE_BASE_TEMP -520
 
 
+static unsigned char waitAdc = 1 ;
+
 /* The lookup table contains raw ADC values for every degree of Celsius
    from -52C to 112C. */
 const unsigned int rawAdc[] = {
@@ -53,6 +55,26 @@ const unsigned int rawAdc[] = {
     61, 60, 58, 57, 56, 55, 54, 53, 52, 51,
     49, 48, 47, 47, 46
 };
+
+// interpolation table ADC digits * 32 -> temperature * 10
+#define MAXDIG 14
+const int dig2tem[MAXDIG][2] = {
+        {  1216 , 1100 },  //  1  1216 -> 110.0 C
+        {  1534 , 1000 },  //  2
+        {  1982 ,  900 },  //  3
+        {  2560 ,  800 },  //  4
+        {  3296 ,  700 },  //  5
+        {  4320 ,  600 },  //  6
+        {  5634 ,  500 },  //  7
+        {  7370 ,  400 },  //  8
+        {  9632 ,  300 },  //  9
+        { 12382 ,  200 },  // 10
+        { 15522 ,  100 },  // 11
+        { 19012 ,    0 },  // 12
+        { 20768 ,  -50 },  // 13
+        { 22466 , -100 }   // 14  22466 digits -> -10.0 C
+};
+
 
 static unsigned int result;
 static unsigned long averaged;
@@ -104,9 +126,27 @@ unsigned int getAdcAveraged()
  */
 int getTemperature()
 {
-    unsigned int val = averaged >> ADC_AVERAGING_BITS;
+    unsigned int val = averaged >> ADC_AVERAGING_BITS ;
     unsigned char rightBound = ADC_RAW_TABLE_SIZE;
     unsigned char leftBound = 0;
+
+    int correct = getParamById (PARAM_TEMPERATURE_CORRECTION) ;
+
+    int val32 = averaged << (5-ADC_AVERAGING_BITS) ;
+    if(val32>=dig2tem[0][0]&&val32<dig2tem[MAXDIG-1][0]) {
+      // dig2tem interpolation
+      for(int i=0;i<MAXDIG-1;i++) {
+        if(val32>=dig2tem[i][0]&&val32<dig2tem[i+1][0]) {
+          unsigned int denom = (dig2tem[i+1][0]-dig2tem[i][0])>>3 ;
+          unsigned int delta = (dig2tem[i+1][0]-val32)>>3  ;
+          unsigned int temp = dig2tem[i][1]-dig2tem[i+1][1] ;
+          temp *=delta ;
+          temp /=denom ;
+          return (int)temp + dig2tem[i+1][1] + correct ;
+        }
+      }
+    }
+
 
     // search through the rawAdc lookup table
     while ( (rightBound - leftBound) > 1) {
@@ -123,12 +163,13 @@ int getTemperature()
     if (val >= rawAdc[leftBound]) {
         val = leftBound * 10;
     } else {
-        val = (rightBound * 10) - ( (val - rawAdc[rightBound]) * 10)
-              / (rawAdc[leftBound] - rawAdc[rightBound]);
+        int denom = (rawAdc[leftBound] - rawAdc[rightBound]) ;
+        if(!denom) denom=1 ;
+        val = (rightBound * 10) - ( (val - rawAdc[rightBound]) * 10) / denom ;
     }
 
     // Final calculation and correction
-    return ADC_RAW_TABLE_BASE_TEMP + val + getParamById (PARAM_TEMPERATURE_CORRECTION);
+    return ADC_RAW_TABLE_BASE_TEMP + val + correct ;
 }
 
 /**
@@ -140,6 +181,11 @@ void ADC1_EOC_handler() __interrupt (22)
     result = ADC_DRH << 2;
     result |= ADC_DRL;
     ADC_CSR &= ~0x80;   // reset EOC
+
+    if(waitAdc) {
+      waitAdc--;
+      return ;
+    }
 
     // Averaging result
     if (averaged == 0) {

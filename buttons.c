@@ -146,8 +146,11 @@ bool isButton3()
 void EXTI2_handler() __interrupt (5)
 {
     unsigned char event;
-    diff = status ^ ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT) );
-    status = ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT) );
+    unsigned char new_status = ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT) );
+    diff = status ^ new_status;
+    status = new_status ;
+
+    resetMenuTimer();
 
     // Send appropriate event to menu.
     if (isButton1() ) {
@@ -169,8 +172,9 @@ void EXTI2_handler() __interrupt (5)
             event = MENU_EVENT_RELEASE_BUTTON3;
         }
     } else {
+        //event = MENU_EVENT_CHECK_TIMER;
         return;
     }
 
-    feedMenu (event);
+    clickMenu (event);
 }

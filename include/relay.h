@@ -24,8 +24,13 @@
 #define false   0
 #endif
 
+#define RELAY_FORCE_NA  0
+#define RELAY_FORCE_ON  1
+#define RELAY_FORCE_OFF 2
+
 void initRelay();
 void refreshRelay();
 void setRelay (bool on);
+void setRelayForce (unsigned char rf);
 
 #endif
