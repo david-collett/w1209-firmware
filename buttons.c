@@ -26,12 +26,12 @@
 
 /* Definition for buttons */
 // Port C control input from buttons.
-#define BUTTONS_PORT   PC_IDR
+#define BUTTONS_PORT   PB_IDR
 // PC.3
-#define BUTTON1_BIT    0x08
-// PC.4
+#define BUTTON1_BIT    0x00
+// PB.4
 #define BUTTON2_BIT    0x10
-// PC.5
+// PB.5
 #define BUTTON3_BIT    0x20
 
 static unsigned char status;
@@ -44,8 +44,8 @@ static unsigned char diff;
  */
 void initButtons()
 {
-    PC_CR1 |= BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT;
-    PC_CR2 |= BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT;
+    PB_CR1 |= BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT;
+    PB_CR2 |= BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT;
     status = ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT) );
     diff = 0;
     EXTI_CR1 |= 0x30;   // generate interrupt on falling and rising front.
