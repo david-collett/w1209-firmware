@@ -23,55 +23,56 @@
 #include "stm8s003/gpio.h"
 
 /* Definitions for display */
-// Port A controls segments: B, F
-// 0000 0110
-#define SSD_SEG_BF_PORT     PA_ODR
-#define SSD_BF_PORT_MASK    0b00000110
-// Port C controls segments: C, G
-// 1100 0000
-#define SSD_SEG_CG_PORT     PC_ODR
-#define SSD_CG_PORT_MASK    0b11000000
-// Port D controls segments: A, E, D, P
-// 0010 1110
-#define SSD_SEG_AEDP_PORT   PD_ODR
-#define SSD_AEDP_PORT_MASK  0b00101110
+// Port D controls segments: B, F
+// 0000 1100
+#define SSD_SEG_BF_PORT     PD_ODR
+#define SSD_BF_PORT_MASK    0b00001100
+// Port A controls segments: C, G
+// 0000 1010
+#define SSD_SEG_CG_PORT     PA_ODR
+#define SSD_CG_PORT_MASK    0b00001010
+// Port C controls segments: A, E, D, P
+// 10111000
+#define SSD_SEG_AEDP_PORT   PC_ODR
+#define SSD_AEDP_PORT_MASK  0b10111000
 
-// PD.5
-#define SSD_SEG_A_BIT       0x20
-// PA.2
-#define SSD_SEG_B_BIT       0x04
 // PC.7
-#define SSD_SEG_C_BIT       0x80
-// PD.3
-#define SSD_SEG_D_BIT       0x08
-// PD.1
-#define SSD_SEG_E_BIT       0x02
-// PA.1
-#define SSD_SEG_F_BIT       0x02
-// PC.6
-#define SSD_SEG_G_BIT       0x40
+#define SSD_SEG_A_BIT       0x80
 // PD.2
-#define SSD_SEG_P_BIT       0x04
+#define SSD_SEG_B_BIT       0x04
+// PA.1
+#define SSD_SEG_C_BIT       0x02
+// PC.5
+#define SSD_SEG_D_BIT       0x20
+// PC.4
+#define SSD_SEG_E_BIT       0x10
+// PD.3
+#define SSD_SEG_F_BIT       0x08
+// PA.3
+#define SSD_SEG_G_BIT       0x08
+// PC.3
+#define SSD_SEG_P_BIT       0x08
 
-// Port B controls digits: 1, 2
-#define SSD_DIGIT_12_PORT   PB_ODR
-// Port D controls digit: 3
-#define SSD_DIGIT_3_PORT    PD_ODR
+// Port D controls digits: 1, 2
+#define SSD_DIGIT_12_PORT   PD_ODR
+// Port C controls digit: 3
+#define SSD_DIGIT_3_PORT    PC_ODR
 
-// PB.4
-#define SSD_DIGIT_1_BIT     0x10
-// PB.5
-#define SSD_DIGIT_2_BIT     0x20
 // PD.4
-#define SSD_DIGIT_3_BIT     0x10
+#define SSD_DIGIT_1_BIT     0x10
+// PD.5
+#define SSD_DIGIT_2_BIT     0x20
+// PC.6
+#define SSD_DIGIT_3_BIT     0x40
 
 const unsigned char Hex2CharMap[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A',
                                      'B', 'C', 'D', 'E', 'F'
                                     };
 
 static unsigned char activeDigitId;
-static unsigned char displayAC[3];
 static unsigned char displayD[3];
+static unsigned char displayA[3];
+static unsigned char displayC[3];
 
 static void enableDigit (unsigned char);
 static void setDigit (unsigned char, unsigned char, bool);
@@ -85,14 +86,12 @@ static bool testMode;
  */
 void initDisplay()
 {
-    PA_DDR |= SSD_SEG_B_BIT | SSD_SEG_F_BIT;
-    PA_CR1 |= SSD_SEG_B_BIT | SSD_SEG_F_BIT;
-    PB_DDR |= SSD_DIGIT_1_BIT | SSD_DIGIT_2_BIT;
-    PB_CR1 |= SSD_DIGIT_1_BIT | SSD_DIGIT_2_BIT;
-    PC_DDR |= SSD_SEG_C_BIT | SSD_SEG_G_BIT;
-    PC_CR1 |= SSD_SEG_C_BIT | SSD_SEG_G_BIT;
-    PD_DDR |= SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT | SSD_SEG_P_BIT | SSD_DIGIT_3_BIT;
-    PD_CR1 |= SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT | SSD_SEG_P_BIT | SSD_DIGIT_3_BIT;
+    PD_DDR |= SSD_SEG_B_BIT | SSD_SEG_F_BIT | SSD_DIGIT_1_BIT | SSD_DIGIT_2_BIT;
+    PD_CR1 |= SSD_SEG_B_BIT | SSD_SEG_F_BIT | SSD_DIGIT_1_BIT | SSD_DIGIT_2_BIT;
+    PA_DDR |= SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+    PA_CR1 |= SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+    PC_DDR |= SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT | SSD_SEG_P_BIT | SSD_DIGIT_3_BIT;
+    PC_CR1 |= SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT | SSD_SEG_P_BIT | SSD_DIGIT_3_BIT;
     displayOff = false;
     activeDigitId = 0;
     setDisplayTestMode (true, "");
@@ -113,11 +112,11 @@ void refreshDisplay()
     }
 
     SSD_SEG_BF_PORT &= ~SSD_BF_PORT_MASK;
-    SSD_SEG_BF_PORT |= displayAC[activeDigitId] & SSD_BF_PORT_MASK;
+    SSD_SEG_BF_PORT |= displayD[activeDigitId];
     SSD_SEG_CG_PORT &= ~SSD_CG_PORT_MASK;
-    SSD_SEG_CG_PORT |= displayAC[activeDigitId] & SSD_CG_PORT_MASK;
+    SSD_SEG_CG_PORT |= displayA[activeDigitId];
     SSD_SEG_AEDP_PORT &= ~SSD_AEDP_PORT_MASK;
-    SSD_SEG_AEDP_PORT |= displayD[activeDigitId];
+    SSD_SEG_AEDP_PORT |= displayC[activeDigitId];
     enableDigit (activeDigitId);
 
     if (activeDigitId > 1) {
@@ -168,9 +167,9 @@ void setDisplayOff (bool val)
 void setDisplayDot (unsigned char id, bool val)
 {
     if (val) {
-        displayD[id] |= SSD_SEG_P_BIT;
+        displayC[id] |= SSD_SEG_P_BIT;
     } else {
-        displayD[id] &= ~SSD_SEG_P_BIT;
+        displayC[id] &= ~SSD_SEG_P_BIT;
     }
 }
 
@@ -282,134 +281,155 @@ static void setDigit (unsigned char id, unsigned char val, bool dot)
 
     switch (val) {
     case '-':
-        displayAC[id] = SSD_SEG_G_BIT;
-        displayD[id] = 0;
+        displayA[id] = SSD_SEG_G_BIT;
+        displayC[id] = 0;
         break;
 
     case ' ':
-        displayAC[id] = 0;
         displayD[id] = 0;
+        displayA[id] = 0;
+        displayC[id] = 0;
         break;
 
     case '0':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT | SSD_SEG_C_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case '1':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_C_BIT;
-        displayD[id] = 0;
+        displayD[id] = SSD_SEG_B_BIT;
+        displayA[id] = SSD_SEG_C_BIT;
+        displayC[id] = 0;
         break;
 
     case '2':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_B_BIT;
+        displayA[id] = SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case '3':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_C_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT;
+        displayD[id] = SSD_SEG_B_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT;
         break;
 
     case '4':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_C_BIT | SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = 0;
+        displayD[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = 0;
         break;
 
     case '5':
-        displayAC[id] = SSD_SEG_C_BIT | SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT;
+        displayD[id] = SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT;
         break;
 
     case '6':
-        displayAC[id] = SSD_SEG_C_BIT | SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case '7':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_C_BIT;
-        displayD[id] = SSD_SEG_A_BIT;
+        displayD[id] = SSD_SEG_B_BIT;
+        displayA[id] = SSD_SEG_C_BIT;
+        displayC[id] = SSD_SEG_A_BIT;
         break;
 
     case '8':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_C_BIT | SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case '9':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_C_BIT | SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT;
+        displayD[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT;
         break;
 
     case 'A':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_C_BIT | SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'B':
-        displayAC[id] = SSD_SEG_C_BIT | SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'C':
-        displayAC[id] = SSD_SEG_F_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_F_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'D':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_C_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_B_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'E':
-        displayAC[id] = SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'F':
-        displayAC[id] = SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'H':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_C_BIT | SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT | SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_E_BIT;
         break;
 
     case 'L':
-        displayAC[id] = SSD_SEG_F_BIT;
-        displayD[id] = SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_F_BIT;
+        displayC[id] = SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'N':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT | SSD_SEG_C_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'O':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT | SSD_SEG_C_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_C_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'P':
-        displayAC[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT | SSD_SEG_G_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_B_BIT | SSD_SEG_F_BIT;
+        displayA[id] = SSD_SEG_G_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
         break;
 
     case 'R':
-        displayAC[id] = SSD_SEG_F_BIT;
-        displayD[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
+        displayD[id] = SSD_SEG_F_BIT;
+        displayC[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
         break;
 
     default:
-        displayAC[id] = 0;
-        displayD[id] = SSD_SEG_D_BIT;
+        displayD[id] = 0;
+        displayA[id] = 0;
+        displayC[id] = SSD_SEG_D_BIT;
     }
 
     if (dot) {
-        displayD[id] |= SSD_SEG_P_BIT;
+        displayC[id] |= SSD_SEG_P_BIT;
     } else {
-        displayD[id] &= ~SSD_SEG_P_BIT;
+        displayC[id] &= ~SSD_SEG_P_BIT;
     }
 
     return;
