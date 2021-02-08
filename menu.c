@@ -63,10 +63,8 @@ unsigned char getMenuDisplay()
  * @param event is one of:
  *  MENU_EVENT_PUSH_BUTTON1
  *  MENU_EVENT_PUSH_BUTTON2
- *  MENU_EVENT_PUSH_BUTTON3
  *  MENU_EVENT_RELEASE_BUTTON1
  *  MENU_EVENT_RELEASE_BUTTON2
- *  MENU_EVENT_RELEASE_BUTTON3
  *  MENU_EVENT_CHECK_TIMER
  */
 void feedMenu (unsigned char event)
@@ -123,20 +121,10 @@ void feedMenu (unsigned char event)
             timer = 0;
             break;
 
-        case MENU_EVENT_PUSH_BUTTON3:
-            decParamId();
-
-        case MENU_EVENT_RELEASE_BUTTON3:
-            timer = 0;
-            break;
-
         case MENU_EVENT_CHECK_TIMER:
             if (timer > MENU_1_SEC_PASSED + MENU_AUTOINC_DELAY) {
                 if (getButton2() ) {
                     incParamId();
-                    timer = MENU_1_SEC_PASSED;
-                } else if (getButton3() ) {
-                    decParamId();
                     timer = MENU_1_SEC_PASSED;
                 }
             }
@@ -169,20 +157,10 @@ void feedMenu (unsigned char event)
             timer = 0;
             break;
 
-        case MENU_EVENT_PUSH_BUTTON3:
-            decParam();
-
-        case MENU_EVENT_RELEASE_BUTTON3:
-            timer = 0;
-            break;
-
         case MENU_EVENT_CHECK_TIMER:
             if (timer > MENU_1_SEC_PASSED + MENU_AUTOINC_DELAY) {
                 if (getButton2() ) {
                     incParam();
-                    timer = MENU_1_SEC_PASSED;
-                } else if (getButton3() ) {
-                    decParam();
                     timer = MENU_1_SEC_PASSED;
                 }
             }
@@ -230,16 +208,8 @@ void feedMenu (unsigned char event)
             timer = 0;
             break;
 
-        case MENU_EVENT_PUSH_BUTTON3:
-            setParamId (PARAM_THRESHOLD);
-            decParam();
-
-        case MENU_EVENT_RELEASE_BUTTON3:
-            timer = 0;
-            break;
-
         case MENU_EVENT_CHECK_TIMER:
-            if (getButton2() || getButton3() ) {
+            if (getButton2()) {
                 blink = false;
             } else {
                 blink = (bool) ( (unsigned char) getUptimeTicks() & 0x80);
@@ -250,9 +220,6 @@ void feedMenu (unsigned char event)
 
                 if (getButton2() ) {
                     incParam();
-                    timer = MENU_1_SEC_PASSED;
-                } else if (getButton3() ) {
-                    decParam();
                     timer = MENU_1_SEC_PASSED;
                 }
             }

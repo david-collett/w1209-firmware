@@ -25,14 +25,12 @@
 #include "menu.h"
 
 /* Definition for buttons */
-// Port C control input from buttons.
+// Port B control input from buttons.
 #define BUTTONS_PORT   PB_IDR
-// PC.3
-#define BUTTON1_BIT    0x00
 // PB.4
-#define BUTTON2_BIT    0x10
+#define BUTTON1_BIT    0x10
 // PB.5
-#define BUTTON3_BIT    0x20
+#define BUTTON2_BIT    0x20
 
 static unsigned char status;
 static unsigned char diff;
@@ -44,11 +42,10 @@ static unsigned char diff;
  */
 void initButtons()
 {
-    PB_CR1 |= BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT;
-    PB_CR2 |= BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT;
-    status = ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT) );
+    PB_CR2 |= (BUTTON1_BIT | BUTTON2_BIT);
+    status = ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT) );
     diff = 0;
-    EXTI_CR1 |= 0x30;   // generate interrupt on falling and rising front.
+    EXTI_CR1 |= 0x0C;   // generate interrupt on falling and rising front.
 }
 
 /**
@@ -92,15 +89,6 @@ bool getButton2()
  * @brief
  * @return
  */
-bool getButton3()
-{
-    return status & BUTTON3_BIT;
-}
-
-/**
- * @brief
- * @return
- */
 bool isButton1()
 {
     if (diff & BUTTON1_BIT) {
@@ -126,28 +114,14 @@ bool isButton2()
 }
 
 /**
- * @brief
- * @return
- */
-bool isButton3()
-{
-    if (diff & BUTTON3_BIT) {
-        diff &= ~BUTTON3_BIT;
-        return true;
-    }
-
-    return false;
-}
-
-/**
  * @brief This function is button's interrupt request handler
  * so keep it extremely small and fast.
  */
-void EXTI2_handler() __interrupt (5)
+void EXTI2_handler() __interrupt (4)
 {
     unsigned char event;
-    diff = status ^ ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT) );
-    status = ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT | BUTTON3_BIT) );
+    diff = status ^ ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT) );
+    status = ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT) );
 
     // Send appropriate event to menu.
     if (isButton1() ) {
@@ -161,12 +135,6 @@ void EXTI2_handler() __interrupt (5)
             event = MENU_EVENT_PUSH_BUTTON2;
         } else {
             event = MENU_EVENT_RELEASE_BUTTON2;
-        }
-    } else if (isButton3() ) {
-        if (getButton3() ) {
-            event = MENU_EVENT_PUSH_BUTTON3;
-        } else {
-            event = MENU_EVENT_RELEASE_BUTTON3;
         }
     } else {
         return;

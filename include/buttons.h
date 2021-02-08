@@ -27,12 +27,10 @@
 void initButtons();
 bool isButton1();
 bool isButton2();
-bool isButton3();
 bool getButton1();
 bool getButton2();
-bool getButton3();
 unsigned char getButton();
 unsigned char getButtonDiff();
-void EXTI2_handler() __interrupt (5);
+void EXTI2_handler() __interrupt (4);
 
 #endif

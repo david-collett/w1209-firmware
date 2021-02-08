@@ -52,7 +52,7 @@ const int paramDefault[] = {0, 20, 110, -50, 0, 0, 0, 0, 0, 280};
  */
 void initParamsEEPROM()
 {
-    if (getButton2() && getButton3() ) {
+    if (getButton1() && getButton2() ) {
         // Restore parameters to default values
         for (paramId = 0; paramId < 10; paramId++) {
             paramCache[paramId] = paramDefault[paramId];
