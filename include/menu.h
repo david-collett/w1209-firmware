@@ -19,10 +19,12 @@
 #define MENU_H
 
 /* Menu sections */
-#define MENU_ROOT          0
-#define MENU_SET_THRESHOLD 1
-#define MENU_SELECT_PARAM  2
-#define MENU_CHANGE_PARAM  3
+#define MENU_ROOT            0
+#define MENU_SET_THRESHOLD   1
+#define MENU_SELECT_PARAM    2
+#define MENU_CHANGE_PARAM    3
+#define MENU_RELAY_FORCE_ON  4
+#define MENU_RELAY_FORCE_OFF 5
 /* Menu events */
 #define MENU_EVENT_PUSH_BUTTON1     0
 #define MENU_EVENT_PUSH_BUTTON2     1
@@ -33,8 +35,11 @@
 #define MENU_EVENT_CHECK_TIMER      6
 
 void initMenu();
+void resetMenuTimer();
 void refreshMenu();
 unsigned char getMenuDisplay();
+void clickMenu(unsigned char event);
+void transitMenu();
 void feedMenu (unsigned char event);
 
 #endif

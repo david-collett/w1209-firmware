@@ -158,6 +158,9 @@ void TIM4_UPD_handler() __interrupt (23)
 
     uptime++;
 
+    // Updating buttons' transition for Menu
+    transitMenu();
+
     // Try not to call all refresh functions at once.
     if ( ( (unsigned char) getUptimeTicks() & 0x0F) == 1) {
         refreshMenu();

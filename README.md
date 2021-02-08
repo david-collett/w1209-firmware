@@ -5,3 +5,8 @@ The F.A.Q. page is available at https://github.com/mister-grumbler/w1209-firmwar
 
 Look at the list of issues to have an idea of what needs to be done for the initial release.
 https://github.com/mister-grumbler/w1209-firmware/issues
+
+## mod fixes
+ - Optimized debouncing buttons.
+ - Fixed the temperature interpolation.
+ - Sets the relay state to force on/off pressing the button +/- for a second.
