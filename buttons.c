@@ -120,8 +120,11 @@ bool isButton2()
 void EXTI2_handler() __interrupt (4)
 {
     unsigned char event;
-    diff = status ^ ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT) );
-    status = ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT) );
+    unsigned char new_status = ~ (BUTTONS_PORT & (BUTTON1_BIT | BUTTON2_BIT) );
+    diff = status ^ new_status;
+    status = new_status ;
+
+    resetMenuTimer();
 
     // Send appropriate event to menu.
     if (isButton1() ) {
@@ -137,8 +140,9 @@ void EXTI2_handler() __interrupt (4)
             event = MENU_EVENT_RELEASE_BUTTON2;
         }
     } else {
+        //event = MENU_EVENT_CHECK_TIMER;
         return;
     }
 
-    feedMenu (event);
+    clickMenu (event);
 }
