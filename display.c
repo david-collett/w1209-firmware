@@ -281,6 +281,7 @@ static void setDigit (unsigned char id, unsigned char val, bool dot)
 
     switch (val) {
     case '-':
+        displayD[id] = 0;
         displayA[id] = SSD_SEG_G_BIT;
         displayC[id] = 0;
         break;
@@ -365,6 +366,7 @@ static void setDigit (unsigned char id, unsigned char val, bool dot)
 
     case 'C':
         displayD[id] = SSD_SEG_F_BIT;
+        displayA[id] = 0;
         displayC[id] = SSD_SEG_A_BIT | SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
@@ -394,6 +396,7 @@ static void setDigit (unsigned char id, unsigned char val, bool dot)
 
     case 'L':
         displayD[id] = SSD_SEG_F_BIT;
+        displayA[id] = 0;
         displayC[id] = SSD_SEG_D_BIT | SSD_SEG_E_BIT;
         break;
 
@@ -417,6 +420,7 @@ static void setDigit (unsigned char id, unsigned char val, bool dot)
 
     case 'R':
         displayD[id] = SSD_SEG_F_BIT;
+        displayA[id] = 0;
         displayC[id] = SSD_SEG_A_BIT | SSD_SEG_E_BIT;
         break;
 
