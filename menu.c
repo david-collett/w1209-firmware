@@ -40,8 +40,8 @@ static unsigned int timer;
 static bool hold,hold2,timer_reset;
 
 #define DEBOUNCE_MAX 10
-static int btnDebounce[3] ;
-static bool btnPressed[3] ;
+static int btnDebounce[2] ;
+static bool btnPressed[2] ;
 
 /**
  * @brief Initialization of local variables.
@@ -52,8 +52,8 @@ void initMenu()
     hold = hold2 = false ;
     timer_reset = true ;
     menuState = menuDisplay = MENU_ROOT;
-    btnDebounce[0]=btnDebounce[1]=btnDebounce[2]=-DEBOUNCE_MAX ;
-    btnPressed[0]=btnPressed[1]=btnPressed[2]=false ;
+    btnDebounce[0]=btnDebounce[1]=-DEBOUNCE_MAX ;
+    btnPressed[0]=btnPressed[1]=false ;
 }
 
 void resetMenuTimer()
@@ -76,10 +76,8 @@ unsigned char getMenuDisplay()
  * @param event is one of:
  *  MENU_EVENT_PUSH_BUTTON1
  *  MENU_EVENT_PUSH_BUTTON2
- *  MENU_EVENT_PUSH_BUTTON3
  *  MENU_EVENT_RELEASE_BUTTON1
  *  MENU_EVENT_RELEASE_BUTTON2
- *  MENU_EVENT_RELEASE_BUTTON3
  */
 void clickMenu(unsigned char event)
 {
@@ -87,10 +85,8 @@ void clickMenu(unsigned char event)
   switch(event) {
     case MENU_EVENT_PUSH_BUTTON1: btnPressed[i=0]=true ; break ;
     case MENU_EVENT_PUSH_BUTTON2: btnPressed[i=1]=true ; break ;
-    case MENU_EVENT_PUSH_BUTTON3: btnPressed[i=2]=true ; break ;
     case MENU_EVENT_RELEASE_BUTTON1: btnPressed[i=0]=false ; break ;
     case MENU_EVENT_RELEASE_BUTTON2: btnPressed[i=1]=false ; break ;
-    case MENU_EVENT_RELEASE_BUTTON3: btnPressed[i=2]=false ; break ;
     default: return ;
   }
   if(btnDebounce[i]==(btnPressed[i]?-DEBOUNCE_MAX:DEBOUNCE_MAX))
@@ -103,14 +99,13 @@ void clickMenu(unsigned char event)
 void transitMenu()
 {
   int i;
-  for(i=0;i<3;i++) {
+  for(i=0;i<2;i++) {
     if(btnPressed[i]) {
       if(btnDebounce[i]<DEBOUNCE_MAX) {
         if(++btnDebounce[i]==DEBOUNCE_MAX) {
           switch(i) {
             case 0: feedMenu(MENU_EVENT_PUSH_BUTTON1) ; break;
             case 1: feedMenu(MENU_EVENT_PUSH_BUTTON2) ; break;
-            case 2: feedMenu(MENU_EVENT_PUSH_BUTTON3) ; break;
           }
         }
       }
@@ -120,7 +115,6 @@ void transitMenu()
           switch(i) {
             case 0: feedMenu(MENU_EVENT_RELEASE_BUTTON1) ; break;
             case 1: feedMenu(MENU_EVENT_RELEASE_BUTTON2) ; break;
-            case 2: feedMenu(MENU_EVENT_RELEASE_BUTTON3) ; break;
           }
         }
       }
@@ -150,6 +144,7 @@ void feedMenu(unsigned char event)
     if (menuState == MENU_ROOT) {
         switch (event) {
         case MENU_EVENT_PUSH_BUTTON1:
+        case MENU_EVENT_PUSH_BUTTON2:
             if(!hold) {
               menuDisplay = MENU_SET_THRESHOLD;
               hold = true ;
@@ -157,24 +152,10 @@ void feedMenu(unsigned char event)
             break;
 
         case MENU_EVENT_RELEASE_BUTTON1:
-            #if 1
+        case MENU_EVENT_RELEASE_BUTTON2:
             if (timer < MENU_5_SEC_PASSED) {
                 menuState = MENU_SET_THRESHOLD;
             }
-            #endif
-            hold = false ;
-            break;
-
-        case MENU_EVENT_PUSH_BUTTON2:
-        case MENU_EVENT_PUSH_BUTTON3:
-            if(!hold) {
-              resetMenuTimer();
-              hold = true ;
-            }
-            break;
-
-        case MENU_EVENT_RELEASE_BUTTON2:
-        case MENU_EVENT_RELEASE_BUTTON3:
             hold = false ;
             break;
 
@@ -186,27 +167,15 @@ void feedMenu(unsigned char event)
                     menuState = menuDisplay = MENU_SELECT_PARAM;
                 }
             }else if(getButton2()) {
-                if (timer > MENU_1_SEC_PASSED) {
+                if (timer > MENU_3_SEC_PASSED) {
                     timer = 0;
                     menuState = menuDisplay = MENU_RELAY_FORCE_ON ;
-                }
-            }else if(getButton3()) {
-                if (timer > MENU_1_SEC_PASSED) {
-                    timer = 0;
-                    menuState = menuDisplay = MENU_RELAY_FORCE_OFF ;
                 }
             }
 
             break;
 
         default:
-            #if 1
-            if (timer > MENU_5_SEC_PASSED) {
-                resetMenuTimer();
-                menuState = menuDisplay = MENU_ROOT;
-            }
-            #endif
-
             break;
         }
     } else if (menuState == MENU_SELECT_PARAM) {
@@ -258,47 +227,55 @@ void feedMenu(unsigned char event)
     } else if (menuState == MENU_CHANGE_PARAM) {
         switch (event) {
         case MENU_EVENT_PUSH_BUTTON1:
-            if(!hold) {
-              menuState = menuDisplay = MENU_SELECT_PARAM;
-              hold=true ;
-            }
-            break;
-
-        case MENU_EVENT_RELEASE_BUTTON1:
-            hold=false ;
-            break;
-
-        case MENU_EVENT_PUSH_BUTTON2:
             if(!hold2) {
               incParam();
               hold2=true ;
             }
+            break ;
+
+        case MENU_EVENT_RELEASE_BUTTON1:
+            hold2=false ; fast_wait = MENU_FAST_WAIT ;
             break;
 
+        case MENU_EVENT_PUSH_BUTTON2:
+            if(!hold2) {
+              decParam();
+              hold2=true ;
+            }
+            break ;
+
         case MENU_EVENT_RELEASE_BUTTON2:
-            hold2=false ;
+            hold2=false ; fast_wait = MENU_FAST_WAIT ;
             break;
 
         case MENU_EVENT_CHECK_TIMER:
-            if (hold2&&timer > MENU_1_SEC_PASSED + MENU_AUTOINC_DELAY) {
-                if (getButton2() ) {
-                    incParam();
-                    timer = MENU_1_SEC_PASSED;
-                }
+            if (getButton1() || getButton2()) {
+                blink = false;
+            } else {
+                blink = (bool) ( (unsigned char) getUptimeTicks() & 0x80);
             }
 
-            #if 1
-            if (getButton1() && timer > MENU_3_SEC_PASSED) {
-                timer = 0;
-                menuState = menuDisplay = MENU_SELECT_PARAM;
-                break;
+            if (hold2&&timer > MENU_1_SEC_PASSED + (!fast_wait?MENU_AUTOINC_FAST_DELAY:MENU_AUTOINC_DELAY) ) {
+
+                if (getButton1() ) {
+                    incParam();
+                    timer = MENU_1_SEC_PASSED;
+                } else if (getButton2()) {
+                    decParam();
+                    timer = MENU_1_SEC_PASSED;
+                }
+
+                if(fast_wait) fast_wait-- ;
             }
-            #endif
+
+            setDisplayOff (blink);
 
             if (timer > MENU_5_SEC_PASSED) {
                 timer = 0;
+
                 storeParams();
                 menuState = menuDisplay = MENU_ROOT;
+                setDisplayOff (false);
             }
 
             break;
@@ -310,7 +287,6 @@ void feedMenu(unsigned char event)
                 menuState == MENU_RELAY_FORCE_OFF ) {
         switch (event) {
         case MENU_EVENT_PUSH_BUTTON2:
-        case MENU_EVENT_PUSH_BUTTON3:
             if(!hold) {
               menuState = menuDisplay = MENU_ROOT;
               setRelayForce(RELAY_FORCE_NA) ;
@@ -322,37 +298,25 @@ void feedMenu(unsigned char event)
             setRelayForce(RELAY_FORCE_ON) ;
             hold=false ;
             break;
-
-        case MENU_EVENT_RELEASE_BUTTON3:
-            setRelayForce(RELAY_FORCE_OFF) ;
-            hold=false ;
-            break;
         }
     } else if (menuState == MENU_SET_THRESHOLD) {
         switch (event) {
         case MENU_EVENT_PUSH_BUTTON1:
-            if(!hold) {
-              menuDisplay = MENU_ROOT;
-              setDisplayOff (false);
-              hold=true ;
+            if(!hold2) {
+              setParamId (PARAM_THRESHOLD);
+              incParam();
+              hold2=true ;
             }
-            break;
+            break ;
 
         case MENU_EVENT_RELEASE_BUTTON1:
-            #if 1
-            if (timer < MENU_5_SEC_PASSED) {
-                storeParams();
-                menuState = MENU_ROOT;
-                setDisplayOff (false);
-            }
-            #endif
-            hold=false ;
+            hold2=false ; fast_wait = MENU_FAST_WAIT ;
             break;
 
         case MENU_EVENT_PUSH_BUTTON2:
             if(!hold2) {
               setParamId (PARAM_THRESHOLD);
-              incParam();
+              decParam();
               hold2=true ;
             }
             break ;
@@ -362,7 +326,7 @@ void feedMenu(unsigned char event)
             break;
 
         case MENU_EVENT_CHECK_TIMER:
-            if (getButton2()) {
+            if (getButton1() || getButton2()) {
                 blink = false;
             } else {
                 blink = (bool) ( (unsigned char) getUptimeTicks() & 0x80);
@@ -371,25 +335,21 @@ void feedMenu(unsigned char event)
             if (hold2&&timer > MENU_1_SEC_PASSED + (!fast_wait?MENU_AUTOINC_FAST_DELAY:MENU_AUTOINC_DELAY) ) {
                 setParamId (PARAM_THRESHOLD);
 
-                if (getButton2() ) {
+                if (getButton1() ) {
                     incParam();
+                    timer = MENU_1_SEC_PASSED;
+                } else if (getButton2()) {
+                    decParam();
                     timer = MENU_1_SEC_PASSED;
                 }
 
                 if(fast_wait) fast_wait-- ;
             }
 
-
             setDisplayOff (blink);
 
             if (timer > MENU_5_SEC_PASSED) {
                 timer = 0;
-
-                if (getButton1() ) {
-                    menuState = menuDisplay = MENU_SELECT_PARAM;
-                    setDisplayOff (false);
-                    break;
-                }
 
                 storeParams();
                 menuState = menuDisplay = MENU_ROOT;
