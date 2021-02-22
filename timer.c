@@ -161,11 +161,11 @@ void TIM4_UPD_handler() __interrupt (23)
     // Updating buttons' transition for Menu
     transitMenu();
 
+
+    startADC();
     // Try not to call all refresh functions at once.
     if ( ( (unsigned char) getUptimeTicks() & 0x0F) == 1) {
         refreshMenu();
-    } else if ( ( (unsigned char) getUptimeTicks() & 0xFF) == 2) {
-        startADC();
     } else if ( ( (unsigned char) getUptimeTicks() & 0xFF) == 3) {
         refreshRelay();
     }

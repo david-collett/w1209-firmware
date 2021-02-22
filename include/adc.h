@@ -20,7 +20,7 @@
 
 void initADC();
 void startADC();
-int getTemperature();
+int getPressure();
 unsigned int getAdcResult();
 unsigned int getAdcAveraged();
 void ADC1_EOC_handler() __interrupt (22);

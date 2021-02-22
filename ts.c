@@ -32,7 +32,7 @@
  */
 int main()
 {
-    static unsigned char* stringBuffer[7];
+    static unsigned char stringBuffer[7];
     unsigned char paramMsg[] = {'P', '0', 0};
 
     initMenu();
@@ -52,8 +52,9 @@ int main()
         }
 
         if (getMenuDisplay() == MENU_ROOT) {
-            int temp = getTemperature();
-            itofpa (temp, (char*) stringBuffer, 0);
+            int pressure = getPressure();
+            pressure -= pressure % 5; // round down to half psi
+            itofpa (pressure, (char*) stringBuffer, 0);
             setDisplayStr ( (char*) stringBuffer);
 
             if (getParamById (PARAM_OVERHEAT_INDICATION) ) {

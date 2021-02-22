@@ -42,9 +42,10 @@
 
 static unsigned char paramId;
 static int paramCache[10];
-const int paramMin[] = {0, 1, -45, -50, -70, 0, 0, 0, 0, -500};
-const int paramMax[] = {1, 150, 110, 105, 70, 10, 1, 0, 0, 1100};
-const int paramDefault[] = {0, 20, 110, -50, 0, 0, 0, 0, 0, 280};
+const int paramMin[] =      {0, 1,  0,   0,  -50, 0, 0, 0, 0, 0};
+const int paramMax[] =      {1, 50, 1100,1100,50, 10,1, 0, 0, 1000};
+const int paramStep[] =     {1, 1,  1,   1,   1,  1, 1, 1, 1, 10};
+const int paramDefault[] =  {1, 20, 1000,0,   0,  0, 0, 0, 0, 320};
 
 /**
  * @brief Check values in the EEPROM to be correct then load them into
@@ -122,7 +123,7 @@ void incParam()
     if (paramId == PARAM_RELAY_MODE || paramId == PARAM_OVERHEAT_INDICATION) {
         paramCache[paramId] = ~paramCache[paramId] & 0x0001;
     } else if (paramCache[paramId] < paramMax[paramId]) {
-        paramCache[paramId]++;
+        paramCache[paramId] += paramStep[paramId];
     }
 }
 
@@ -134,7 +135,7 @@ void decParam()
     if (paramId == PARAM_RELAY_MODE || paramId == PARAM_OVERHEAT_INDICATION) {
         paramCache[paramId] = ~paramCache[paramId] & 0x0001;
     } else if (paramCache[paramId] > paramMin[paramId]) {
-        paramCache[paramId]--;
+        paramCache[paramId] -= paramStep[paramId];
     }
 }
 

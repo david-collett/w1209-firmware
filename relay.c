@@ -77,9 +77,14 @@ void refreshRelay()
 {
     bool mode = getParamById (PARAM_RELAY_MODE);
 
-    int temp = getTemperature() ;
-    int hold = getParamById (PARAM_THRESHOLD) ;
-    int hyst = getParamById (PARAM_RELAY_HYSTERESIS) ;
+    int temp = getPressure();
+    int hold = getParamById (PARAM_THRESHOLD);
+    int hyst = getParamById (PARAM_RELAY_HYSTERESIS);
+
+    // pressure readings while operating are highter by this formula
+    // Found by taking readings and plotting. 
+    // TODO: Make this configurable OR auto-calibrate somehow.
+    int on_hold = hold * 0.65 + 200;
 
     // overheat protection
     if (getParamById (PARAM_OVERHEAT_INDICATION) ) {
@@ -95,9 +100,10 @@ void refreshRelay()
       // inverse
       temp = - temp ;
       hold = - hold ;
+      on_hold = - on_hold;
     }
     if(state) { // Relay state is enabled
-      if(temp <= hold) {
+      if(temp <= on_hold) {
           if ( (getParamById (PARAM_RELAY_DELAY) << RELAY_TIMER_MULTIPLIER) < timer) {
               state = false; timer = 0 ;
           }
