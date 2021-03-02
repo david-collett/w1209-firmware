@@ -31,6 +31,7 @@
 void initRelay();
 void refreshRelay();
 void setRelay (bool on);
+bool getRelay ();
 void setRelayForce (unsigned char rf);
 
 #endif

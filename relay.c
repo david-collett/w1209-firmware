@@ -69,6 +69,10 @@ void setRelay (bool on)
 
 }
 
+bool getRelay() {
+    return state;
+}
+
 /**
  * @brief This function is being called during timer's interrupt
  *  request so keep it extremely small and fast.
