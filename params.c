@@ -23,10 +23,10 @@
  * -----+---+---------------------------------------------
  * P0 - | C | Cooling/Heating
  *            (relay ON when temperature is over(C)/below(H) threshold value)
- * P1 - | 2 | 0.1 ... 15.0 - Hysteresis
- * P2 - |110| 110 ... -45 - Maximum allowed temperature value
- * P3 - |-50| -50 ... 105 Minimum allowed temperature value
- * P4 - | 0 | 7.0 ... -7.0 Correction of temperature value
+ * P1 - | 20| 0 ... 50 - Hysteresis (1/10th psi)
+ * P2 - | 65| 0 ... 100 - Running correction slope (100ths)
+ * P3 - |200| 0 ... 1000 - Running correction offset (1/10th psi)
+ * P4 - | 0 | -100 ... 100 Correction of temperature value (1/10th psi)
  * P5 - | 0 | 0 ... 10 Relay switching delay in minutes
  * P6 - |Off| On/Off Indication of overheating
  * TH - | 28| Threshold value
@@ -42,10 +42,10 @@
 
 static unsigned char paramId;
 static int paramCache[10];
-const int paramMin[] =      {0, 1,  0,   0,  -50, 0, 0, 0, 0, 0};
-const int paramMax[] =      {1, 50, 1100,1100,50, 10,1, 0, 0, 1000};
-const int paramStep[] =     {1, 1,  1,   1,   1,  1, 1, 1, 1, 10};
-const int paramDefault[] =  {1, 20, 1000,0,   0,  0, 0, 0, 0, 320};
+const int paramMin[] =      {0, 0,  0,   0,  -100, 0, 0, 0, 0, 0};
+const int paramMax[] =      {1, 50, 100, 1000,100, 10,1, 0, 0, 1000};
+const int paramStep[] =     {1, 1,  1,   1,   1,   1, 1, 1, 1, 10};
+const int paramDefault[] =  {1, 20, 65,  200, 0,   0, 0, 0, 0, 320};
 
 /**
  * @brief Check values in the EEPROM to be correct then load them into
@@ -207,15 +207,15 @@ void paramToString (unsigned char id, unsigned char* strBuff)
         itofpa (paramCache[id], strBuff, 0);
         break;
 
-    case PARAM_MAX_TEMPERATURE:
+    case PARAM_CALC_SLOPE:
         itofpa (paramCache[id], strBuff, 6);
         break;
 
-    case PARAM_MIN_TEMPERATURE:
+    case PARAM_CALC_OFFSET:
         itofpa (paramCache[id], strBuff, 6);
         break;
 
-    case PARAM_TEMPERATURE_CORRECTION:
+    case PARAM_PRESSURE_CORRECTION:
         itofpa (paramCache[id], strBuff, 0);
         break;
 

@@ -21,9 +21,9 @@
 /* Definition for parameter identifiers */
 #define PARAM_RELAY_MODE                0
 #define PARAM_RELAY_HYSTERESIS          1
-#define PARAM_MAX_TEMPERATURE           2
-#define PARAM_MIN_TEMPERATURE           3
-#define PARAM_TEMPERATURE_CORRECTION    4
+#define PARAM_CALC_SLOPE                2
+#define PARAM_CALC_OFFSET               3
+#define PARAM_PRESSURE_CORRECTION       4
 #define PARAM_RELAY_DELAY               5
 #define PARAM_OVERHEAT_INDICATION       6
 #define PARAM_THRESHOLD                 9

@@ -84,21 +84,14 @@ void refreshRelay()
     int temp = getPressure();
     int hold = getParamById (PARAM_THRESHOLD);
     int hyst = getParamById (PARAM_RELAY_HYSTERESIS);
+    float slope = getParamById(PARAM_CALC_SLOPE) / 100.0;
+    int offset = getParamById(PARAM_CALC_OFFSET);
 
     // pressure readings while operating are highter by this formula
     // Found by taking readings and plotting. 
     // TODO: Make this configurable OR auto-calibrate somehow.
-    int on_hold = hold * 0.65 + 200;
 
-    // overheat protection
-    if (getParamById (PARAM_OVERHEAT_INDICATION) ) {
-        if ( temp < getParamById (PARAM_MIN_TEMPERATURE) *10 /*LLL*/ ||
-             temp > getParamById (PARAM_MAX_TEMPERATURE) *10 /*HHH*/ ) {
-            setRelay (false);
-            timer = 0 ;
-            return; // overheat or too cold
-        }
-    }
+    int on_hold = hold * slope + offset;
 
     if(mode) { // Hot
       // inverse

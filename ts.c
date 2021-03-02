@@ -56,14 +56,6 @@ int main()
             pressure -= pressure % 5; // round down to half psi
             itofpa (pressure, (char*) stringBuffer, 0);
             setDisplayStr ( (char*) stringBuffer);
-
-            if (getParamById (PARAM_OVERHEAT_INDICATION) ) {
-                if (temp < getParamById (PARAM_MIN_TEMPERATURE)*10 ) {
-                    setDisplayStr ("LLL");
-                } else if (temp > getParamById (PARAM_MAX_TEMPERATURE)*10 ) {
-                    setDisplayStr ("HHH");
-                }
-            }
         } else if (getMenuDisplay() == MENU_RELAY_FORCE_ON) {
             setDisplayStr ( " ON" );
         } else if (getMenuDisplay() == MENU_RELAY_FORCE_OFF) {
