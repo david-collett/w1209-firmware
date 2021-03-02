@@ -42,10 +42,6 @@ static unsigned int result;
 
 static int mvPerTenthPSI = ((pressureMax-pressureZero) / pressureSensorMax) ;
 
-// pump characteristics
-// cycle (according to audio waveform) 16ms
-
-
 
 /**
  * @brief Initialize ADC's configuration registers.
